@@ -4,6 +4,7 @@ import { ReelsProvider } from "./context/ReelsContext";
 import Home from "./pages/Home";
 import SavedReels from "./pages/SavedReels";
 import AuthPage from "./pages/AuthPage";
+import Header from "./components/Header";
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ export default function App() {
     <AuthProvider>
       <ReelsProvider>
         <Router>
+          <Header />
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
