@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { db } from "../config/firebase";
+import { db } from "../config/firebaseConfig";
 import {
   collection,
   addDoc,
@@ -10,47 +10,54 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { useAuth } from "./AuthContext";
 
 const ReelsContext = createContext();
 
 export const ReelsProvider = ({ children }) => {
+  const { user } = useAuth();
   const [reels, setReels] = useState([]);
   const [collections, setCollections] = useState([]);
   const [tags, setTags] = useState([]);
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchReels = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "reels"));
+        const q = query(collection(db, "reels"), where("userId", "==", user.uid));
+        const querySnapshot = await getDocs(q);
         const reelsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
         setReels(reelsData);
       } catch (error) {
-        console.error("Error fetching reels:", error);
+        console.error("❌ Error fetching reels:", error);
       }
     };
 
     const fetchCollectionsAndTags = async () => {
       try {
         const collectionsSnapshot = await getDocs(
-          collection(db, "collections")
+          query(collection(db, "collections"), where("userId", "==", user.uid))
         );
         setCollections(collectionsSnapshot.docs.map((doc) => doc.data().name));
 
-        const tagsSnapshot = await getDocs(collection(db, "tags"));
+        const tagsSnapshot = await getDocs(query(collection(db, "tags"), where("userId", "==", user.uid)));
         setTags(tagsSnapshot.docs.map((doc) => doc.data().name));
       } catch (error) {
-        console.error("Error fetching collections/tags:", error);
+        console.error("❌ Error fetching collections/tags:", error);
       }
     };
 
     fetchReels();
     fetchCollectionsAndTags();
-  }, []);
+  }, [user]);
 
   const addReel = async (reel) => {
+    if (!user) return;
+
     try {
       const existingReel = reels.find((r) => r.url === reel.url);
       if (existingReel) {
@@ -58,47 +65,51 @@ export const ReelsProvider = ({ children }) => {
         return;
       }
 
-      const docRef = await addDoc(collection(db, "reels"), reel);
-      setReels((prevReels) => [...prevReels, { id: docRef.id, ...reel }]);
+      const reelWithUser = { ...reel, userId: user.uid };
+      const docRef = await addDoc(collection(db, "reels"), reelWithUser);
+      setReels((prevReels) => [...prevReels, { id: docRef.id, ...reelWithUser }]);
     } catch (error) {
-      console.error("Error adding reel:", error);
+      console.error("❌ Error adding reel:", error);
     }
   };
 
   const deleteReel = async (reelId) => {
     try {
-      console.log(`Deleting reel: ${reelId}...`);
-
-      // Step 1: Delete from Firestore
       await deleteDoc(doc(db, "reels", reelId));
-
-      // Step 2: Update UI State
       setReels((prevReels) => prevReels.filter((reel) => reel.id !== reelId));
-
-      console.log(`Reel ${reelId} deleted successfully.`);
     } catch (error) {
-      console.error("Error deleting reel:", error);
+      console.error("❌ Error deleting reel:", error);
     }
   };
 
   const addCollection = async (name) => {
-    if (!collections.includes(name)) {
-      await addDoc(collection(db, "collections"), { name });
+    if (!user || collections.includes(name)) return;
+
+    try {
+      await addDoc(collection(db, "collections"), { name, userId: user.uid });
       setCollections([...collections, name]);
+    } catch (error) {
+      console.error("❌ Error adding collection:", error);
     }
   };
 
   const addTag = async (name) => {
-    if (!tags.includes(name)) {
-      await addDoc(collection(db, "tags"), { name });
+    if (!user || tags.includes(name)) return;
+
+    try {
+      await addDoc(collection(db, "tags"), { name, userId: user.uid });
       setTags([...tags, name]);
+    } catch (error) {
+      console.error("❌ Error adding tag:", error);
     }
   };
 
   const deleteCollection = async (name) => {
+    if (!user) return;
+
     try {
-      // Step 1: Delete from Firestore collections table
-      const q = query(collection(db, "collections"), where("name", "==", name));
+      // Step 1: Delete collection from Firestore
+      const q = query(collection(db, "collections"), where("name", "==", name), where("userId", "==", user.uid));
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach(async (docSnap) => {
         await deleteDoc(docSnap.ref);
@@ -107,18 +118,15 @@ export const ReelsProvider = ({ children }) => {
       // Step 2: Remove collection from all reels
       const reelsQuery = query(
         collection(db, "reels"),
-        where("collections", "array-contains", name)
+        where("collections", "array-contains", name),
+        where("userId", "==", user.uid)
       );
       const reelsSnapshot = await getDocs(reelsQuery);
 
       for (const reelDoc of reelsSnapshot.docs) {
         const reelData = reelDoc.data();
-        const updatedCollections = reelData.collections.filter(
-          (col) => col !== name
-        );
-        await updateDoc(doc(db, "reels", reelDoc.id), {
-          collections: updatedCollections,
-        });
+        const updatedCollections = reelData.collections.filter((col) => col !== name);
+        await updateDoc(doc(db, "reels", reelDoc.id), { collections: updatedCollections });
       }
 
       // Step 3: Update UI State
@@ -130,14 +138,16 @@ export const ReelsProvider = ({ children }) => {
         }))
       );
     } catch (error) {
-      console.error("Error deleting collection:", error);
+      console.error("❌ Error deleting collection:", error);
     }
   };
 
   const deleteTag = async (name) => {
+    if (!user) return;
+
     try {
-      // Step 1: Delete from Firestore tags table
-      const q = query(collection(db, "tags"), where("name", "==", name));
+      // Step 1: Delete tag from Firestore
+      const q = query(collection(db, "tags"), where("name", "==", name), where("userId", "==", user.uid));
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach(async (docSnap) => {
         await deleteDoc(docSnap.ref);
@@ -146,7 +156,8 @@ export const ReelsProvider = ({ children }) => {
       // Step 2: Remove tag from all reels
       const reelsQuery = query(
         collection(db, "reels"),
-        where("tags", "array-contains", name)
+        where("tags", "array-contains", name),
+        where("userId", "==", user.uid)
       );
       const reelsSnapshot = await getDocs(reelsQuery);
 
@@ -165,7 +176,7 @@ export const ReelsProvider = ({ children }) => {
         }))
       );
     } catch (error) {
-      console.error("Error deleting tag:", error);
+      console.error("❌ Error deleting tag:", error);
     }
   };
 
