@@ -19,6 +19,7 @@ export const ReelsProvider = ({ children }) => {
   const [reels, setReels] = useState([]);
   const [collections, setCollections] = useState([]);
   const [tags, setTags] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
 
   useEffect(() => {
     if (!user) return;
@@ -32,28 +33,49 @@ export const ReelsProvider = ({ children }) => {
           ...doc.data(),
         }));
         setReels(reelsData);
+        setSearchResults(reelsData); // Default to all reels
       } catch (error) {
         console.error("❌ Error fetching reels:", error);
       }
     };
 
-    const fetchCollectionsAndTags = async () => {
-      try {
-        const collectionsSnapshot = await getDocs(
-          query(collection(db, "collections"), where("userId", "==", user.uid))
-        );
-        setCollections(collectionsSnapshot.docs.map((doc) => doc.data().name));
+  const fetchCollectionsAndTags = async () => {
+    try {
+      const collectionsSnapshot = await getDocs(
+        query(collection(db, "collections"), where("userId", "==", user.uid))
+      );
+      setCollections(collectionsSnapshot.docs.map((doc) => doc.data().name));
 
-        const tagsSnapshot = await getDocs(query(collection(db, "tags"), where("userId", "==", user.uid)));
-        setTags(tagsSnapshot.docs.map((doc) => doc.data().name));
-      } catch (error) {
-        console.error("❌ Error fetching collections/tags:", error);
-      }
-    };
+      const tagsSnapshot = await getDocs(query(collection(db, "tags"), where("userId", "==", user.uid)));
+      setTags(tagsSnapshot.docs.map((doc) => doc.data().name));
+    } catch (error) {
+      console.error("❌ Error fetching collections/tags:", error);
+    }
+  };
 
     fetchReels();
     fetchCollectionsAndTags();
   }, [user]);
+
+  const searchReels = (searchQuery) => {
+    if (!searchQuery.trim()) {
+      setSearchResults(reels);
+      return;
+    }
+
+    const filteredReels = reels.filter(
+      (reel) =>
+        reel.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        reel.collections.some((col) =>
+          col.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        reel.tags.some((tag) =>
+          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    );
+
+    setSearchResults(filteredReels);
+  };
 
   const addReel = async (reel) => {
     if (!user) return;
@@ -182,17 +204,20 @@ export const ReelsProvider = ({ children }) => {
 
   return (
     <ReelsContext.Provider
-      value={{
-        reels,
-        addReel,
-        deleteReel,
-        collections,
-        addCollection,
-        deleteCollection,
-        tags,
-        addTag,
-        deleteTag,
-      }}
+    value={{
+      reels,
+      addReel,
+      deleteReel,
+      collections,
+      addCollection,
+      deleteCollection,
+      tags,
+      addTag,
+      deleteTag,
+      searchResults,
+      searchReels,
+      setSearchResults,
+    }}
     >
       {children}
     </ReelsContext.Provider>
