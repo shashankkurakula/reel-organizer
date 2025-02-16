@@ -1,6 +1,15 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { db } from "../config/firebase";
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 
 const ReelsContext = createContext();
 
@@ -25,7 +34,9 @@ export const ReelsProvider = ({ children }) => {
 
     const fetchCollectionsAndTags = async () => {
       try {
-        const collectionsSnapshot = await getDocs(collection(db, "collections"));
+        const collectionsSnapshot = await getDocs(
+          collection(db, "collections")
+        );
         setCollections(collectionsSnapshot.docs.map((doc) => doc.data().name));
 
         const tagsSnapshot = await getDocs(collection(db, "tags"));
@@ -41,7 +52,6 @@ export const ReelsProvider = ({ children }) => {
 
   const addReel = async (reel) => {
     try {
-      // Check if the reel already exists
       const existingReel = reels.find((r) => r.url === reel.url);
       if (existingReel) {
         alert("Reel already exists!");
@@ -69,8 +79,93 @@ export const ReelsProvider = ({ children }) => {
     }
   };
 
+  const deleteCollection = async (name) => {
+    try {
+      // Step 1: Delete from Firestore collections table
+      const q = query(collection(db, "collections"), where("name", "==", name));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach(async (docSnap) => {
+        await deleteDoc(docSnap.ref);
+      });
+
+      // Step 2: Remove collection from all reels
+      const reelsQuery = query(
+        collection(db, "reels"),
+        where("collections", "array-contains", name)
+      );
+      const reelsSnapshot = await getDocs(reelsQuery);
+
+      for (const reelDoc of reelsSnapshot.docs) {
+        const reelData = reelDoc.data();
+        const updatedCollections = reelData.collections.filter(
+          (col) => col !== name
+        );
+        await updateDoc(doc(db, "reels", reelDoc.id), {
+          collections: updatedCollections,
+        });
+      }
+
+      // Step 3: Update UI State
+      setCollections((prev) => prev.filter((col) => col !== name));
+      setReels((prevReels) =>
+        prevReels.map((reel) => ({
+          ...reel,
+          collections: reel.collections.filter((col) => col !== name),
+        }))
+      );
+    } catch (error) {
+      console.error("Error deleting collection:", error);
+    }
+  };
+
+  const deleteTag = async (name) => {
+    try {
+      // Step 1: Delete from Firestore tags table
+      const q = query(collection(db, "tags"), where("name", "==", name));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach(async (docSnap) => {
+        await deleteDoc(docSnap.ref);
+      });
+
+      // Step 2: Remove tag from all reels
+      const reelsQuery = query(
+        collection(db, "reels"),
+        where("tags", "array-contains", name)
+      );
+      const reelsSnapshot = await getDocs(reelsQuery);
+
+      for (const reelDoc of reelsSnapshot.docs) {
+        const reelData = reelDoc.data();
+        const updatedTags = reelData.tags.filter((tag) => tag !== name);
+        await updateDoc(doc(db, "reels", reelDoc.id), { tags: updatedTags });
+      }
+
+      // Step 3: Update UI State
+      setTags((prev) => prev.filter((tag) => tag !== name));
+      setReels((prevReels) =>
+        prevReels.map((reel) => ({
+          ...reel,
+          tags: reel.tags.filter((tag) => tag !== name),
+        }))
+      );
+    } catch (error) {
+      console.error("Error deleting tag:", error);
+    }
+  };
+
   return (
-    <ReelsContext.Provider value={{ reels, addReel, collections, addCollection, tags, addTag }}>
+    <ReelsContext.Provider
+      value={{
+        reels,
+        addReel,
+        collections,
+        addCollection,
+        deleteCollection,
+        tags,
+        addTag,
+        deleteTag,
+      }}
+    >
       {children}
     </ReelsContext.Provider>
   );

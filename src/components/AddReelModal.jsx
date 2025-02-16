@@ -2,19 +2,31 @@ import { useState } from "react";
 import { useReels } from "../context/ReelsContext";
 
 export default function AddReelModal({ isOpen, onClose }) {
-  const { addReel, collections, addCollection, tags, addTag } = useReels();
+  const {
+    addReel,
+    collections,
+    addCollection,
+    deleteCollection,
+    tags,
+    addTag,
+    deleteTag,
+  } = useReels();
   const [reelUrl, setReelUrl] = useState("");
   const [title, setTitle] = useState("");
   const [selectedCollections, setSelectedCollections] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [newCollection, setNewCollection] = useState("");
   const [newTag, setNewTag] = useState("");
+  const [showAllCollections, setShowAllCollections] = useState(false);
+  const [showAllTags, setShowAllTags] = useState(false);
 
   if (!isOpen) return null;
 
   const extractThumbnail = (url) => {
     const reelId = url.split("/reel/")[1]?.split("/")[0];
-    return reelId ? `https://www.instagram.com/p/${reelId}/media/?size=l` : null;
+    return reelId
+      ? `https://www.instagram.com/p/${reelId}/media/?size=l`
+      : null;
   };
 
   const handleSaveReel = () => {
@@ -49,7 +61,7 @@ export default function AddReelModal({ isOpen, onClose }) {
     const newCollections = newCollection
       .split(",")
       .map((col) => col.trim())
-      .filter((col) => col !== "" && !collections.includes(col)); // Ensure unique values
+      .filter((col) => col !== "" && !collections.includes(col));
 
     newCollections.forEach((col) => addCollection(col));
     setSelectedCollections([...selectedCollections, ...newCollections]);
@@ -60,7 +72,7 @@ export default function AddReelModal({ isOpen, onClose }) {
     const newTags = newTag
       .split(",")
       .map((tag) => tag.trim())
-      .filter((tag) => tag !== "" && !tags.includes(tag)); // Ensure unique values
+      .filter((tag) => tag !== "" && !tags.includes(tag));
 
     newTags.forEach((tag) => addTag(tag));
     setSelectedTags([...selectedTags, ...newTags]);
@@ -68,29 +80,53 @@ export default function AddReelModal({ isOpen, onClose }) {
   };
 
   const toggleCollectionSelection = (col) => {
-    if (selectedCollections.includes(col)) {
-      setSelectedCollections(selectedCollections.filter((c) => c !== col));
-    } else {
-      setSelectedCollections([...selectedCollections, col]);
-    }
+    setSelectedCollections((prev) =>
+      prev.includes(col) ? prev.filter((c) => c !== col) : [...prev, col]
+    );
   };
 
   const toggleTagSelection = (tag) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleDeleteCollection = (name) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the collection "${name}"? This will remove it from all reels.`
+      )
+    ) {
+      deleteCollection(name);
     }
   };
+
+  const handleDeleteTag = (name) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the tag "${name}"? This will remove it from all reels.`
+      )
+    ) {
+      deleteTag(name);
+    }
+  };
+
+  const visibleCollections = showAllCollections
+    ? collections
+    : collections.slice(0, 6);
+  const visibleTags = showAllTags ? tags : tags.slice(0, 6);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-end">
       <div className="bg-white w-full h-[80vh] p-4 rounded-t-2xl">
         <div className="flex justify-between items-center mb-4">
-          <button onClick={onClose} className="text-red-500">Cancel</button>
-          <button onClick={handleSaveReel} className="text-green-500">Save</button>
+          <button onClick={onClose} className="text-red-500">
+            Cancel
+          </button>
+          <button onClick={handleSaveReel} className="text-green-500">
+            Save
+          </button>
         </div>
-
         <input
           type="text"
           placeholder="Paste Instagram Reel URL..."
@@ -105,23 +141,38 @@ export default function AddReelModal({ isOpen, onClose }) {
           onChange={(e) => setTitle(e.target.value)}
           className="p-2 border rounded-md w-full mb-2"
         />
-
-        {/* Collections Input */}
+        {/* Collections */}
         <label className="block mb-1">Select Collections:</label>
         <div className="flex flex-wrap gap-2 mb-2">
-          {collections.map((col) => (
-            <span
-              key={col}
-              onClick={() => toggleCollectionSelection(col)}
-              className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
-                selectedCollections.includes(col) ? "bg-blue-500 text-white" : "bg-gray-200"
-              }`}
-            >
-              {col}
-            </span>
+          {visibleCollections.map((col) => (
+            <div key={col} className="flex items-center space-x-1">
+              <span
+                onClick={() => toggleCollectionSelection(col)}
+                className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
+                  selectedCollections.includes(col)
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                {col}
+              </span>
+              <button
+                onClick={() => handleDeleteCollection(col)}
+                className="text-red-500 text-xs"
+              >
+                ✖
+              </button>
+            </div>
           ))}
         </div>
-
+        {collections.length > 6 && (
+          <button
+            onClick={() => setShowAllCollections(!showAllCollections)}
+            className="text-blue-500 text-sm"
+          >
+            {showAllCollections ? "Show Less" : "Show More"}
+          </button>
+        )}
         {/* Add New Collection */}
         <div className="flex space-x-2 mb-2">
           <input
@@ -131,34 +182,45 @@ export default function AddReelModal({ isOpen, onClose }) {
             onChange={(e) => setNewCollection(e.target.value)}
             className="p-2 border rounded-md flex-grow"
           />
-          <button onClick={handleAddCollection} className="bg-blue-500 text-white px-2 py-1 rounded-md">
+          <button
+            onClick={handleAddCollection}
+            className="bg-blue-500 text-white px-2 py-1 rounded-md"
+          >
             Add
           </button>
         </div>
-
-        {/* Selected Collections */}
-        <div className="flex flex-wrap gap-2 mb-2">
-          {selectedCollections.map((col) => (
-            <span key={col} className="px-2 py-1 bg-blue-200 rounded-md text-sm">{col}</span>
-          ))}
-        </div>
-
-        {/* Tags Input */}
+        {/* Tags */}
         <label className="block mb-1">Select Tags:</label>
         <div className="flex flex-wrap gap-2 mb-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              onClick={() => toggleTagSelection(tag)}
-              className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
-                selectedTags.includes(tag) ? "bg-green-500 text-white" : "bg-gray-200"
-              }`}
-            >
-              {tag}
-            </span>
+          {visibleTags.map((tag) => (
+            <div key={tag} className="flex items-center space-x-1">
+              <span
+                onClick={() => toggleTagSelection(tag)}
+                className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
+                  selectedTags.includes(tag)
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                {tag}
+              </span>
+              <button
+                onClick={() => handleDeleteTag(tag)}
+                className="text-red-500 text-xs"
+              >
+                ✖
+              </button>
+            </div>
           ))}
         </div>
-
+        {tags.length > 6 && (
+          <button
+            onClick={() => setShowAllTags(!showAllTags)}
+            className="text-blue-500 text-sm"
+          >
+            {showAllTags ? "Show Less" : "Show More"}
+          </button>
+        )}
         {/* Add New Tag */}
         <div className="flex space-x-2 mb-2">
           <input
@@ -168,16 +230,12 @@ export default function AddReelModal({ isOpen, onClose }) {
             onChange={(e) => setNewTag(e.target.value)}
             className="p-2 border rounded-md flex-grow"
           />
-          <button onClick={handleAddTag} className="bg-green-500 text-white px-2 py-1 rounded-md">
+          <button
+            onClick={handleAddTag}
+            className="bg-green-500 text-white px-2 py-1 rounded-md"
+          >
             Add
           </button>
-        </div>
-
-        {/* Selected Tags */}
-        <div className="flex flex-wrap gap-2">
-          {selectedTags.map((tag) => (
-            <span key={tag} className="px-2 py-1 bg-green-200 rounded-md text-sm">{tag}</span>
-          ))}
         </div>
       </div>
     </div>
