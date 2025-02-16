@@ -65,6 +65,22 @@ export const ReelsProvider = ({ children }) => {
     }
   };
 
+  const deleteReel = async (reelId) => {
+    try {
+      console.log(`Deleting reel: ${reelId}...`);
+
+      // Step 1: Delete from Firestore
+      await deleteDoc(doc(db, "reels", reelId));
+
+      // Step 2: Update UI State
+      setReels((prevReels) => prevReels.filter((reel) => reel.id !== reelId));
+
+      console.log(`Reel ${reelId} deleted successfully.`);
+    } catch (error) {
+      console.error("Error deleting reel:", error);
+    }
+  };
+
   const addCollection = async (name) => {
     if (!collections.includes(name)) {
       await addDoc(collection(db, "collections"), { name });
@@ -158,6 +174,7 @@ export const ReelsProvider = ({ children }) => {
       value={{
         reels,
         addReel,
+        deleteReel,
         collections,
         addCollection,
         deleteCollection,
