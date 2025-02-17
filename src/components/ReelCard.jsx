@@ -1,23 +1,19 @@
 import { useReels } from "../context/ReelsContext";
-import { FaTrash } from "react-icons/fa";
+import { FaEdit } from "react-icons/fa";
+import { useState } from "react";
+import AddReelModal from "./AddReelModal";
 
 export default function ReelCard({ reel }) {
-  const { deleteReel } = useReels();
-
-  const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this reel?")) {
-      deleteReel(reel.id);
-    }
-  };
+  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <div className="relative p-4 bg-white shadow-md rounded-lg">
-      {/* Trash Icon for Deleting */}
+      {/* Edit Icon (Replaces Delete) */}
       <button
-        onClick={handleDelete}
-        className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+        onClick={() => setIsEditing(true)}
+        className="absolute top-2 right-2 text-blue-500 hover:text-blue-700"
       >
-        <FaTrash size={16} />
+        <FaEdit size={16} />
       </button>
 
       <img src={reel.thumbnail} alt={reel.title} className="w-full rounded-md" />
@@ -47,6 +43,15 @@ export default function ReelCard({ reel }) {
       >
         View on Instagram
       </a>
+
+      {/* Open Edit Modal */}
+      {isEditing && (
+        <AddReelModal
+          isOpen={isEditing}
+          onClose={() => setIsEditing(false)}
+          reelToEdit={reel} // Pass reel data for editing
+        />
+      )}
     </div>
   );
 }
