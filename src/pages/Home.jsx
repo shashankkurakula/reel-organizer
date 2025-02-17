@@ -6,7 +6,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+    <div className="relative flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4 mt-16">
       <h1 className="text-3xl font-bold text-blue-600 mb-4">Instagram Reel Organizer</h1>
       <p className="text-gray-600 mb-6">Save & Organize your Instagram Reels easily!</p>
 
