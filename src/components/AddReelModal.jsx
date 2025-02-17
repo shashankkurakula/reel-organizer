@@ -123,140 +123,143 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-end z-50">
-      <div className="bg-white w-full h-[80vh] p-4 rounded-t-2xl">
-        <div className="flex justify-between items-center mb-4">
-          <button onClick={onClose} className="text-red-500">
-            Cancel
-          </button>
-          <button onClick={handleSaveReel} className="text-green-500">
-            {reelToEdit ? "Update" : "Save"}
-          </button>
-        </div>
+      <div className="bg-white w-full h-[80vh] p-4 rounded-t-2xl overflow-hidden">
+        {/* Scrollable content wrapper */}
+        <div className="h-full overflow-y-auto p-2">
+          <div className="flex justify-between items-center mb-4">
+            <button onClick={onClose} className="text-red-500">
+              Cancel
+            </button>
+            <button onClick={handleSaveReel} className="text-green-500">
+              {reelToEdit ? "Update" : "Save"}
+            </button>
+          </div>
 
-        {/* Show Thumbnail in Edit Mode, URL Input for New Reel */}
-        {reelToEdit ? (
-          thumbnail ? (
-            <img
-              src={thumbnail}
-              alt="Thumbnail"
-              className="w-full rounded-md mb-2"
-            />
+          {/* Show Thumbnail in Edit Mode, URL Input for New Reel */}
+          {reelToEdit ? (
+            thumbnail ? (
+              <img
+                src={thumbnail}
+                alt="Thumbnail"
+                className="w-full max-h-40 object-contain rounded-md mb-2"
+              />
+            ) : (
+              <div className="w-full h-40 bg-gray-200 rounded-md flex items-center justify-center">
+                <span className="text-gray-500">No Thumbnail</span>
+              </div>
+            )
           ) : (
-            <div className="w-full h-40 bg-gray-200 rounded-md flex items-center justify-center">
-              <span className="text-gray-500">No Thumbnail</span>
-            </div>
-          )
-        ) : (
+            <input
+              type="text"
+              placeholder="Paste Instagram Reel URL..."
+              value={reelUrl}
+              onChange={(e) => setReelUrl(e.target.value)}
+              className="p-2 border rounded-md w-full mb-2"
+            />
+          )}
+
           <input
             type="text"
-            placeholder="Paste Instagram Reel URL..."
-            value={reelUrl}
-            onChange={(e) => setReelUrl(e.target.value)}
+            placeholder="Enter title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="p-2 border rounded-md w-full mb-2"
           />
-        )}
 
-        <input
-          type="text"
-          placeholder="Enter title..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="p-2 border rounded-md w-full mb-2"
-        />
+          {/* Collections Section */}
+          <label className="block mb-1">Select Collections:</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {visibleCollections.map((col) => (
+              <div key={col} className="flex items-center space-x-1">
+                <span
+                  onClick={() => toggleCollectionSelection(col)}
+                  className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
+                    selectedCollections.includes(col)
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  {col}
+                </span>
+                <button
+                  onClick={() => deleteCollection(col)}
+                  className="text-red-500 text-xs"
+                >
+                  ✖
+                </button>
+              </div>
+            ))}
+          </div>
 
-        {/* Collections Section */}
-        <label className="block mb-1">Select Collections:</label>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {visibleCollections.map((col) => (
-            <div key={col} className="flex items-center space-x-1">
-              <span
-                onClick={() => toggleCollectionSelection(col)}
-                className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
-                  selectedCollections.includes(col)
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                {col}
-              </span>
-              <button
-                onClick={() => deleteCollection(col)}
-                className="text-red-500 text-xs"
-              >
-                ✖
-              </button>
-            </div>
-          ))}
+          {/* Add New Collection */}
+          <div className="flex space-x-2 mb-2">
+            <input
+              type="text"
+              placeholder="New Collection (comma-separated)"
+              value={newCollection}
+              onChange={(e) => setNewCollection(e.target.value)}
+              className="p-2 border rounded-md flex-grow"
+            />
+            <button
+              onClick={handleAddCollection}
+              className="bg-blue-500 text-white px-2 py-1 rounded-md"
+            >
+              Add
+            </button>
+          </div>
+
+          {/* Tags Section */}
+          <label className="block mb-1">Select Tags:</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {visibleTags.map((tag) => (
+              <div key={tag} className="flex items-center space-x-1">
+                <span
+                  onClick={() => toggleTagSelection(tag)}
+                  className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
+                    selectedTags.includes(tag)
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  {tag}
+                </span>
+                <button
+                  onClick={() => deleteTag(tag)}
+                  className="text-red-500 text-xs"
+                >
+                  ✖
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add New Tag */}
+          <div className="flex space-x-2 mb-2">
+            <input
+              type="text"
+              placeholder="New Tag (comma-separated)"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              className="p-2 border rounded-md flex-grow"
+            />
+            <button
+              onClick={handleAddTag}
+              className="bg-green-500 text-white px-2 py-1 rounded-md"
+            >
+              Add
+            </button>
+          </div>
+
+          {/* Delete Button in Edit Mode */}
+          {reelToEdit && (
+            <button
+              onClick={handleDeleteReel}
+              className="w-full bg-red-500 text-white py-2 rounded-md mt-4"
+            >
+              Delete Reel
+            </button>
+          )}
         </div>
-
-        {/* Add New Collection */}
-        <div className="flex space-x-2 mb-2">
-          <input
-            type="text"
-            placeholder="New Collection (comma-separated)"
-            value={newCollection}
-            onChange={(e) => setNewCollection(e.target.value)}
-            className="p-2 border rounded-md flex-grow"
-          />
-          <button
-            onClick={handleAddCollection}
-            className="bg-blue-500 text-white px-2 py-1 rounded-md"
-          >
-            Add
-          </button>
-        </div>
-
-        {/* Tags Section */}
-        <label className="block mb-1">Select Tags:</label>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {visibleTags.map((tag) => (
-            <div key={tag} className="flex items-center space-x-1">
-              <span
-                onClick={() => toggleTagSelection(tag)}
-                className={`px-2 py-1 rounded-md text-sm cursor-pointer ${
-                  selectedTags.includes(tag)
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                {tag}
-              </span>
-              <button
-                onClick={() => deleteTag(tag)}
-                className="text-red-500 text-xs"
-              >
-                ✖
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* Add New Tag */}
-        <div className="flex space-x-2 mb-2">
-          <input
-            type="text"
-            placeholder="New Tag (comma-separated)"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            className="p-2 border rounded-md flex-grow"
-          />
-          <button
-            onClick={handleAddTag}
-            className="bg-green-500 text-white px-2 py-1 rounded-md"
-          >
-            Add
-          </button>
-        </div>
-
-        {/* Delete Button in Edit Mode */}
-        {reelToEdit && (
-          <button
-            onClick={handleDeleteReel}
-            className="w-full bg-red-500 text-white py-2 rounded-md mt-4"
-          >
-            Delete Reel
-          </button>
-        )}
       </div>
     </div>
   );
