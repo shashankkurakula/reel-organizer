@@ -25,26 +25,29 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
   const [thumbnail, setThumbnail] = useState("");
   const [reelUrl, setReelUrl] = useState("");
 
-  // Populate Fields for Editing Mode
+  // Populate Fields for Editing Mode or Shared URL
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedUrl = params.get("url");
+
     if (reelToEdit) {
+      // If editing, populate fields from existing reel
       setTitle(reelToEdit.title || "");
       setSelectedCollections(reelToEdit.collections || []);
       setSelectedTags(reelToEdit.tags || []);
       setThumbnail(reelToEdit.thumbnail || null);
       setReelUrl(reelToEdit.url || "");
+    } else if (sharedUrl) {
+      // If coming from a shared link, pre-fill the URL field
+      setReelUrl(decodeURIComponent(sharedUrl));
     } else {
-      setTitle("");
-      setSelectedCollections([]);
-      setSelectedTags([]);
-      setThumbnail(null);
-      setReelUrl("");
+      // Reset fields if no editing or shared URL
+      resetForm();
     }
-  }, [reelToEdit]);
+  }, [reelToEdit, isOpen]); // Reset fields whenever modal opens
 
   if (!isOpen) return null;
 
-  // Handle Save (Add or Update)
   // Handle Save (Add or Update)
   const handleSaveReel = () => {
     if (!title.trim()) {
@@ -80,6 +83,9 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
       addReel(newReel);
     }
 
+    // Remove shared URL from the browser address bar after adding reel
+    window.history.replaceState({}, document.title, window.location.pathname);
+
     // Reset form fields before closing modal
     resetForm();
     onClose();
@@ -94,8 +100,8 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
     setNewTag("");
     setShowAllCollections(false);
     setShowAllTags(false);
-    setThumbnail("");
-    setReelUrl("");
+    setThumbnail(null); // Ensure null instead of empty string to avoid image errors
+    setReelUrl(""); // Ensure empty string when there's no shared URL
   };
 
   // Handle Reel Deletion
