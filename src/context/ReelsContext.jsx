@@ -105,24 +105,39 @@ export const ReelsProvider = ({ children }) => {
 
   const updateReel = async (updatedReel) => {
     try {
+      if (!updatedReel.id) {
+        console.error("❌ Error updating reel: Missing reel ID");
+        return;
+      }
+  
       const reelDocRef = doc(db, "reels", updatedReel.id);
+  
+      // Ensure collections and tags are arrays, fallback to empty arrays if null
+      const safeCollections = updatedReel.collections ? [...updatedReel.collections] : [];
+      const safeTags = updatedReel.tags ? [...updatedReel.tags] : [];
+  
       await updateDoc(reelDocRef, {
         title: updatedReel.title,
-        collections: updatedReel.collections,
-        tags: updatedReel.tags,
+        collections: safeCollections,
+        tags: safeTags,
       });
-
-      // Update UI
+  
+      // Update UI state
       setReels((prevReels) =>
         prevReels.map((reel) =>
-          reel.id === updatedReel.id ? updatedReel : reel
+          reel.id === updatedReel.id
+            ? { ...reel, title: updatedReel.title, collections: safeCollections, tags: safeTags }
+            : reel
         )
       );
+  
+      console.log(`✅ Reel ${updatedReel.id} updated successfully.`);
     } catch (error) {
       console.error("❌ Error updating reel:", error);
     }
   };
-
+  
+  
   const deleteReel = async (reelId) => {
     try {
       await deleteDoc(doc(db, "reels", reelId));

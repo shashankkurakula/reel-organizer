@@ -51,19 +51,34 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
       return;
     }
 
-    const updatedReel = {
-      id: reelToEdit ? reelToEdit.id : null, // Preserve ID when updating
-      url: reelToEdit ? reelToEdit.url : reelUrl, // URL cannot be changed
-      thumbnail,
-      title: title.trim(),
-      collections: selectedCollections,
-      tags: selectedTags,
-    };
-
+    // Ensure reelToEdit exists before updating
     if (reelToEdit) {
-      updateReel(updatedReel); // Update existing reel
+      if (!reelToEdit.id) {
+        console.error("❌ Error: Trying to update a reel without an ID!");
+        return;
+      }
+
+      const updatedReel = {
+        id: reelToEdit.id, // Ensure ID is present
+        url: reelToEdit.url, // URL cannot be changed
+        thumbnail,
+        title: title.trim(),
+        collections: selectedCollections || [],
+        tags: selectedTags || [],
+      };
+
+      console.log("🛠 Debug Updated Reel:", updatedReel);
+      updateReel(updatedReel); // Call the update function
     } else {
-      addReel(updatedReel); // Add new reel
+      const newReel = {
+        url: reelUrl,
+        thumbnail,
+        title: title.trim(),
+        collections: selectedCollections || [],
+        tags: selectedTags || [],
+      };
+
+      addReel(newReel); // Call the add function
     }
 
     onClose();
