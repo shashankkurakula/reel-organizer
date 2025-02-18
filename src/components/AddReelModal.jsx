@@ -45,13 +45,13 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
   if (!isOpen) return null;
 
   // Handle Save (Add or Update)
+  // Handle Save (Add or Update)
   const handleSaveReel = () => {
     if (!title.trim()) {
       alert("Title cannot be empty!");
       return;
     }
 
-    // Ensure reelToEdit exists before updating
     if (reelToEdit) {
       if (!reelToEdit.id) {
         console.error("❌ Error: Trying to update a reel without an ID!");
@@ -59,16 +59,15 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
       }
 
       const updatedReel = {
-        id: reelToEdit.id, // Ensure ID is present
-        url: reelToEdit.url, // URL cannot be changed
+        id: reelToEdit.id,
+        url: reelToEdit.url,
         thumbnail,
         title: title.trim(),
         collections: selectedCollections || [],
         tags: selectedTags || [],
       };
 
-      console.log("🛠 Debug Updated Reel:", updatedReel);
-      updateReel(updatedReel); // Call the update function
+      updateReel(updatedReel);
     } else {
       const newReel = {
         url: reelUrl,
@@ -78,10 +77,25 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
         tags: selectedTags || [],
       };
 
-      addReel(newReel); // Call the add function
+      addReel(newReel);
     }
 
+    // Reset form fields before closing modal
+    resetForm();
     onClose();
+  };
+
+  // Function to reset all input fields
+  const resetForm = () => {
+    setTitle("");
+    setSelectedCollections([]);
+    setSelectedTags([]);
+    setNewCollection("");
+    setNewTag("");
+    setShowAllCollections(false);
+    setShowAllTags(false);
+    setThumbnail("");
+    setReelUrl("");
   };
 
   // Handle Reel Deletion

@@ -16,7 +16,15 @@ export default function ReelCard({ reel }) {
         <FaEdit size={16} />
       </button>
 
-      <img src={reel.thumbnail} alt={reel.title} className="w-full rounded-md" />
+      {/* Only render image if `thumbnail` exists */}
+      {reel.thumbnail ? (
+        <img src={reel.thumbnail} alt={reel.title} className="w-full rounded-md" />
+      ) : (
+        <div className="w-full h-40 bg-gray-200 rounded-md flex items-center justify-center">
+          <span className="text-gray-500">No Thumbnail</span>
+        </div>
+      )}
+
       <h2 className="text-lg font-semibold mt-2">{reel.title}</h2>
 
       {/* Collections */}
