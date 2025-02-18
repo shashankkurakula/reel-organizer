@@ -25,6 +25,19 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
   const [thumbnail, setThumbnail] = useState("");
   const [reelUrl, setReelUrl] = useState("");
 
+  // Function to reset all input fields
+  const resetForm = () => {
+    setTitle("");
+    setSelectedCollections([]);
+    setSelectedTags([]);
+    setNewCollection("");
+    setNewTag("");
+    setShowAllCollections(false);
+    setShowAllTags(false);
+    setThumbnail(null);
+    setReelUrl("");
+  };
+
   // Populate Fields for Editing Mode or Shared URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -89,19 +102,6 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
     // Reset form fields before closing modal
     resetForm();
     onClose();
-  };
-
-  // Function to reset all input fields
-  const resetForm = () => {
-    setTitle("");
-    setSelectedCollections([]);
-    setSelectedTags([]);
-    setNewCollection("");
-    setNewTag("");
-    setShowAllCollections(false);
-    setShowAllTags(false);
-    setThumbnail(null); // Ensure null instead of empty string to avoid image errors
-    setReelUrl(""); // Ensure empty string when there's no shared URL
   };
 
   // Handle Reel Deletion
