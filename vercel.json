@@ -1,0 +1,6 @@
+{
+    "rewrites": [
+      { "source": "/add-reel", "destination": "/index.html" }
+    ]
+  }
+  
