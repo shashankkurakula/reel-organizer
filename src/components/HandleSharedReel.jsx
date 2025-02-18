@@ -9,8 +9,16 @@ const HandleSharedReel = () => {
     const sharedReelURL = params.get("url");
 
     if (sharedReelURL) {
-      // Redirect to add reel page with pre-filled URL
-      navigate(`/add-reel?url=${encodeURIComponent(sharedReelURL)}`);
+      console.log("🔗 Shared URL detected:", sharedReelURL);
+
+      // Check if inside the PWA
+      if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
+        console.log("✅ Opened inside PWA, redirecting...");
+        navigate(`/add-reel?url=${encodeURIComponent(sharedReelURL)}`);
+      } else {
+        console.log("🚨 Not inside PWA, prompting to open PWA...");
+        window.location.href = `https://yourpwa.com/?source=pwa&url=${encodeURIComponent(sharedReelURL)}`;
+      }
     }
   }, []);
 

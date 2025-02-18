@@ -2,7 +2,7 @@
     "name": "Instagram Reel Organizer",
     "short_name": "Reel Organizer",
     "description": "Save & Organize your Instagram Reels easily!",
-    "start_url": "/",
+    "start_url": "/?source=pwa",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ffffff",
