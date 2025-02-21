@@ -9,5 +9,8 @@ export default defineConfig({
   ],
   build: {
     manifest: true
+  },
+  server: {
+      host: true
   }
 });

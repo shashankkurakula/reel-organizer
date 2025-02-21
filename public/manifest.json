@@ -3,9 +3,16 @@
     "short_name": "Reel Organizer",
     "description": "Save & Organize your Instagram Reels easily!",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ffffff",
+    "protocol_handlers": [
+      {
+        "protocol": "web+reelorganizer",
+        "url": "/add-reel?url=%s"
+      }
+    ],
     "icons": [
       {
         "src": "/icons/icon-192x192.png",
