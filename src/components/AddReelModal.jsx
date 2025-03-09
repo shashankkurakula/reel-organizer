@@ -42,7 +42,8 @@ export default function AddReelModal({ isOpen, onClose, reelToEdit }) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sharedUrl = params.get("url");
-
+    console.log("reelToEdit:", reelToEdit);
+    
     if (reelToEdit) {
       // If editing, populate fields from existing reel
       setTitle(reelToEdit.title || "");

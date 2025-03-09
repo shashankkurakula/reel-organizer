@@ -26,13 +26,10 @@ export const ReelsProvider = ({ children }) => {
 
     const fetchReels = async () => {
       try {
-        const q = query(
-          collection(db, "reels"),
-          where("userId", "==", user.uid)
-        );
+        const q = query(collection(db, "reels"), where("userId", "==", user.uid));
         const querySnapshot = await getDocs(q);
         const reelsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
+          id: doc.id, // Ensure this line is present
           ...doc.data(),
         }));
         setReels(reelsData);
@@ -84,16 +81,21 @@ export const ReelsProvider = ({ children }) => {
 
   const addReel = async (reel) => {
     if (!user) return;
-
+  
     try {
       const existingReel = reels.find((r) => r.url === reel.url);
       if (existingReel) {
         alert("Reel already exists!");
         return;
       }
-
-      const reelWithUser = { ...reel, userId: user.uid };
+  
+      // Remove the `id` field before adding to Firestore
+      const { id, ...reelWithoutId } = reel;
+      const reelWithUser = { ...reelWithoutId, userId: user.uid };
+  
       const docRef = await addDoc(collection(db, "reels"), reelWithUser);
+  
+      // Add the Firestore-generated ID to the local state
       setReels((prevReels) => [
         ...prevReels,
         { id: docRef.id, ...reelWithUser },
@@ -112,26 +114,20 @@ export const ReelsProvider = ({ children }) => {
   
       const reelDocRef = doc(db, "reels", updatedReel.id);
   
-      // Ensure collections and tags are arrays, fallback to empty arrays if null
-      const safeCollections = updatedReel.collections ? [...updatedReel.collections] : [];
-      const safeTags = updatedReel.tags ? [...updatedReel.tags] : [];
-  
       await updateDoc(reelDocRef, {
         title: updatedReel.title,
-        collections: safeCollections,
-        tags: safeTags,
+        collections: updatedReel.collections || [],
+        tags: updatedReel.tags || [],
       });
   
       // Update UI state
       setReels((prevReels) =>
         prevReels.map((reel) =>
           reel.id === updatedReel.id
-            ? { ...reel, title: updatedReel.title, collections: safeCollections, tags: safeTags }
+            ? { ...reel, ...updatedReel }
             : reel
         )
       );
-  
-      console.log(`✅ Reel ${updatedReel.id} updated successfully.`);
     } catch (error) {
       console.error("❌ Error updating reel:", error);
     }
